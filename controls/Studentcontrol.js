@@ -49,32 +49,34 @@ const Studentcontrol={
         }
     },
     assignorchange: async (req, res) => {
-        const { mentorid, studentid } = req.params
+        const { mentorid, studentid } = req.params;
         try {
-            const mentor = await Mentor.findOne({ idd: mentorid })
-            const student = await Student.findOne({ idd: studentid })
-    
+            const mentor = await Mentor.findOne({ idd: mentorid });
+            const student = await Student.findOne({ idd: studentid });
+
             if (!mentor || !student) {
-                return res.status(404).send({ message: 'Mentor or Student not found' })
+                return res.status(404).send({ message: 'Mentor or Student not found' });
             }
-    
-            if (student.mentor) {
-                const previousMentor = await Mentor.findOne({ idd: student.mentor })
+
+            if (student.mentor && student.mentor !== mentorid) {
+                const previousMentor = await Mentor.findOne({ idd: student.mentor });
                 if (previousMentor) {
-                    previousMentor.students.pull(student.idd)
-                    await previousMentor.save()
+                    previousMentor.students.pull(student.idd);
+                    await previousMentor.save();
                 }
             }
-    
-            student.mentor = mentor.idd
-            mentor.students.push(student.idd)
-    
-            await student.save()
-            await mentor.save()
-    
-            res.status(200).send({ message: 'Mentor assigned or changed successfully' })
+
+            student.mentor = mentor.idd;
+            if (!mentor.students.includes(student.idd)) {
+                mentor.students.push(student.idd);
+            }
+
+            await student.save();
+            await mentor.save();
+
+            res.status(200).send({ message: 'Mentor assigned or changed successfully' });
         } catch (e) {
-            res.status(500).send({ message: e.message })
+            res.status(500).send({ message: e.message });
         }
     },
     allstudents:async (req,res)=>{
